@@ -346,7 +346,7 @@ const metricsList = [
   { key: 'impatience', label: '浮躁系数 (Impatience)' }
 ];
 
-const aiScores = ref<{ merit: number; mindfulness: number; attachment: number; karma: number; impatience: number; } | null>(null);
+const aiScores = ref<Record<string, number> | null>(null);
 
 const styleOptions = [
   { label: '传统禅宗开示 (经典佛教公案指点迷局)', value: '传统禅宗开示' },
@@ -364,7 +364,7 @@ interface HistoryItem {
   category: string;
   input: string;
   styleLabel: string;
-  aiScores: { merit: number; mindfulness: number; attachment: number; karma: number; impatience: number; } | null;
+  aiScores: Record<string, number> | null;
   output: string;
 }
 
