@@ -1,5 +1,15 @@
 <template>
   <div class="app-container">
+    <!-- 顶部生成成功浮动 Toast -->
+    <transition name="fade">
+      <div v-if="showSuccessToast" class="top-success-toast">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>佛曰开示谶语生成成功！</span>
+      </div>
+    </transition>
+
     <!-- 右上角常驻分享按钮 -->
     <button class="floating-share-btn" @click="showShareGuide = true">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="share-icon">
@@ -12,12 +22,13 @@
       <span>分享</span>
     </button>
 
+    <!-- 顶部 App Header (已移除未登录额度提示栏) -->
     <header>
       <h1>{{ appTitle }}</h1>
       <p>智能 AI 体验引擎 · 每日 AI 佛曰解压</p>
     </header>
 
-    <!-- 活跃动态 -->
+    <!-- 活跃动态与使用人数轮播 -->
     <UserTicker />
 
     <!-- 核心卡片 / 结果与历史记录展示 -->
@@ -31,6 +42,7 @@
         </button>
       </div>
 
+      <!-- 本地历史记录视图 -->
       <div v-if="showHistory" class="history-view">
         <div class="history-header">
           <span>本地禅修谶语历史</span>
@@ -50,14 +62,8 @@
             
             <div class="h-card-body">
               <div class="h-card-nomad-title">
-                <span class="h-city-tag">📿 {{ item.category }}</span>
-                <span class="h-score-badge">🚀 禅意度: {{ getAverageScore(item) }}</span>
-              </div>
-
-              <!-- 迷你指标条 -->
-              <div class="h-mini-metrics">
-                <div class="h-mini-item">🕉️ 功德: {{ item.userScores.merit }}/5</div>
-                <div class="h-mini-item">🧘 禅定: {{ item.userScores.mindfulness }}/5</div>
+                <span class="h-city-tag">烦恼: {{ item.category }}</span>
+                <span class="h-score-badge">综合禅修值: {{ getAverageScore(item) }}</span>
               </div>
 
               <p class="h-card-excerpt"><strong>佛曰开示：</strong>{{ cleanExcerpt(item.output) }}</p>
@@ -82,68 +88,24 @@
             <label class="selector-label">选择当前所遇的烦恼类型</label>
             <select v-model="inquiryCategory" class="style-select">
               <option value="职场内卷">职场内卷 (工作压力与疲惫)</option>
-              <option value="财富焦虑">财富焦虑 (金钱、购房与物价)</option>
-              <option value="情感困惑">情感困惑 (人际交往与恋爱纠葛)</option>
+              <option value="财富焦虑">财富焦虑 (金钱、房贷与物价)</option>
+              <option value="情感纠葛">情感纠葛 (人际交往与恋爱纠葛)</option>
               <option value="虚度光阴">虚度光阴 (拖延症与虚无感)</option>
               <option value="精神内耗">精神内耗 (深夜焦虑与胡思乱想)</option>
             </select>
           </div>
 
           <div class="selector-group">
-            <label class="selector-label">请滑动评估您的精神状况</label>
-            <div class="score-sliders">
-              <div class="slider-group-item">
-                <div class="slider-header">
-                  <span class="slider-title">🕉️ 功德值 (Merit)</span>
-                  <span class="slider-value">{{ userScores.merit }} / 5</span>
-                </div>
-                <input type="range" min="1" max="5" step="1" v-model.number="userScores.merit" class="range-slider" />
-              </div>
-
-              <div class="slider-group-item">
-                <div class="slider-header">
-                  <span class="slider-title">🧘 禅定度 (Mindfulness)</span>
-                  <span class="slider-value">{{ userScores.mindfulness }} / 5</span>
-                </div>
-                <input type="range" min="1" max="5" step="1" v-model.number="userScores.mindfulness" class="range-slider" />
-              </div>
-
-              <div class="slider-group-item">
-                <div class="slider-header">
-                  <span class="slider-title">🍂 执念值 (Attachment)</span>
-                  <span class="slider-value">{{ userScores.attachment }} / 5</span>
-                </div>
-                <input type="range" min="1" max="5" step="1" v-model.number="userScores.attachment" class="range-slider" />
-              </div>
-
-              <div class="slider-group-item">
-                <div class="slider-header">
-                  <span class="slider-title">⚖️ 因果造化 (Karma)</span>
-                  <span class="slider-value">{{ userScores.karma }} / 5</span>
-                </div>
-                <input type="range" min="1" max="5" step="1" v-model.number="userScores.karma" class="range-slider" />
-              </div>
-
-              <div class="slider-group-item">
-                <div class="slider-header">
-                  <span class="slider-title">🍵 浮躁系数 (Impatience)</span>
-                  <span class="slider-value">{{ userScores.impatience }} / 5</span>
-                </div>
-                <input type="range" min="1" max="5" step="1" v-model.number="userScores.impatience" class="range-slider" />
-              </div>
-            </div>
-          </div>
-
-          <div class="selector-group">
-            <label class="selector-label">细述您的疑惑烦恼 (心诚则灵，选填)</label>
+            <label class="selector-label">输入您的烦恼或执念困惑 (选填)</label>
             <textarea 
               v-model="userInput" 
-              placeholder="请输入您的具体困扰，例如：每天都要加班到十点，工资却不见涨，到底该继续坚持还是辞职回家考公..."
+              placeholder="请输入您遇到的具体困惑，例如：工作十年遇到了瓶颈，想辞职当数字游民但又害怕失去稳定的月薪安全感..."
+              rows="4"
             ></textarea>
           </div>
 
           <div class="selector-group">
-            <label class="selector-label">选择开示流派与视角</label>
+            <label class="selector-label">选择解惑开示流派</label>
             <select v-model="activeStyle" class="style-select">
               <option 
                 v-for="style in styleOptions" 
@@ -162,6 +124,11 @@
           >
             {{ loading ? '禅思推演中...' : '虔诚问佛，求解红尘' }}
           </button>
+
+          <!-- 异常提示 -->
+          <div v-if="errorMsg" class="error-banner">
+            {{ errorMsg }}
+          </div>
         </div>
 
         <!-- 测评结果展现 -->
@@ -181,7 +148,7 @@
                 <circle cx="60" cy="80" r="10" fill="rgba(255,255,255,0.08)" />
                 <path d="M140,110 C130,120 115,125 100,125 C85,125 70,120 60,110" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="3" stroke-linecap="round" />
               </svg>
-              <!-- 浮空功德动效 -->
+              <!-- 浮空功德动效 (严格无 Emoji) -->
               <transition-group name="float-up">
                 <span 
                   v-for="item in floatingItems" 
@@ -199,29 +166,19 @@
             </div>
           </div>
 
-          <!-- 数据对比看板 -->
+          <!-- 单轨禅修数据分析看板 (AI共识判定) -->
           <div v-if="aiScores" class="comparison-dashboard">
-            <h3 class="dashboard-title">📊 禅心数据对比 (您的评分 vs AI共识)</h3>
+            <h3 class="dashboard-title">禅心数据分析 (AI共识测定值)</h3>
             <div class="comparison-grid">
               <div v-for="metric in metricsList" :key="metric.key" class="comparison-row">
                 <div class="metric-info">
-                  <span class="metric-label">{{ metric.icon }} {{ metric.label }}</span>
+                  <span class="metric-label">{{ metric.label }}</span>
                   <span class="metric-scores-text">
-                    您的打分: <strong style="color: var(--primary-color)">{{ userScores[metric.key] }}</strong> | 
-                    AI判定: <strong style="color: var(--accent-color)">{{ aiScores[metric.key] }}</strong>
+                    判定值: <strong style="color: var(--accent-color)">{{ aiScores[metric.key] }} / 5</strong>
                   </span>
                 </div>
                 <div class="comparison-bars">
-                  <!-- 用户评分条 -->
                   <div class="bar-container">
-                    <span class="bar-label">自己</span>
-                    <div class="bar-bg">
-                      <div class="bar-fill user-fill" :style="{ width: userScores[metric.key] * 20 + '%' }"></div>
-                    </div>
-                  </div>
-                  <!-- AI评分条 -->
-                  <div class="bar-container">
-                    <span class="bar-label">AI</span>
                     <div class="bar-bg">
                       <div class="bar-fill ai-fill" :style="{ width: aiScores[metric.key] * 20 + '%' }"></div>
                     </div>
@@ -232,37 +189,41 @@
           </div>
 
           <div class="result-header">
-            <span class="result-title">📿 AI 佛开示：{{ inquiryCategory }}</span>
+            <div class="result-title-group">
+              <span class="result-title">AI 佛开示：{{ inquiryCategory }}</span>
+              <span class="success-badge">生成成功</span>
+            </div>
             <div class="button-actions">
               <button class="icon-btn" @click="copyText">
-                {{ copied ? '已复制天机' : '复制谶语' }}
+                {{ copied ? '已复制谶语' : '复制谶语' }}
               </button>
-              <button class="icon-btn" @click="showShareGuide = true">
-                分享朋友圈
+              <button class="icon-btn highlight" @click="showShareCard = true">
+                生成分享卡片
               </button>
-              <button class="icon-btn" @click="resetReview">
+              <button class="icon-btn restart-btn" @click="resetReview">
                 重新求问
               </button>
             </div>
           </div>
 
-          <div class="ai-response-wrapper">
-            <div class="output-content scroll-box" style="text-align: left;">{{ cleanResponseText(result) }}</div>
+          <!-- 加载中骨架屏 -->
+          <div v-if="loading" class="skeleton">
+            <div class="skeleton-line" style="width: 80%"></div>
+            <div class="skeleton-line" style="width: 95%"></div>
+            <div class="skeleton-line" style="width: 60%"></div>
+            <div class="skeleton-line" style="width: 75%"></div>
           </div>
-        </div>
 
-        <!-- 加载状态 -->
-        <div v-if="loading" class="ai-loading">
-          <div class="spinner"></div>
-          <p>正在为您焚香问卜，读取因果谱系，整理禅思谶语...</p>
-        </div>
-
-        <!-- 异常提示 -->
-        <div v-if="errorMsg" style="color: var(--accent-color); font-size: 0.85rem; text-align: center; margin-top: 0.5rem;">
-          {{ errorMsg }}
+          <!-- 渲染回复 -->
+          <div class="ai-response-wrapper">
+            <div class="output-content scroll-box" style="text-align: left;">{{ displayResultText }}</div>
+          </div>
         </div>
       </div>
     </main>
+
+    <!-- 演示案例区组件 (模块三：30 条佛曰解惑精选案例展示) -->
+    <DemoShowcase @use-sample="handleUseSample" />
 
     <!-- 底部隐私与服务条款链接 -->
     <footer class="footer-links">
@@ -276,8 +237,8 @@
       <div class="modal-content">
         <h3>Privacy Policy</h3>
         <div class="modal-text-content modal-scroll-area">
-          <p>我们非常重视您的隐私。您在本应用中选择的困惑类别、滑块评分以及补充文字等数据，均仅用于实时调用大模型进行禅理生成，我们不在服务器端存储这些内容。</p>
-          <p>为了在您的浏览器本地保留“功德值”和您的“禅修谶语卡片”历史，应用会使用浏览器的本地存储（localStorage）保存相应状态。</p>
+          <p>我们非常重视您的隐私。您在本应用中选择的烦恼和倾诉仅用于实时大模型佛解语开示，我们不会在服务器端进行永久存储或记录。</p>
+          <p>为了记录您的解惑历史、免费额度和功德总数，本应用会在您的浏览器本地（localStorage）记录相关状态。</p>
         </div>
         <button class="modal-btn" @click="showPrivacy = false">关闭</button>
       </div>
@@ -288,48 +249,56 @@
       <div class="modal-content">
         <h3>Terms of Service</h3>
         <div class="modal-text-content modal-scroll-area">
-          <p>欢迎使用我们的 AI 佛曰与禅心测评服务。使用本应用代表您同意遵守当地有关人工智能生成内容的各项管理条例。</p>
-          <p>本微应用给出的解惑内容、评分看板与功德累加均为趣味性解压互动设计，不构成任何真实世界的宗教承诺、心理咨询或实际决策指导。</p>
+          <p>欢迎使用我们的 AI 每日佛曰解惑与数字禅修微应用。本应用仅提供心理调试与禅意娱乐开示，不代表任何宗教信仰和医疗诊断。</p>
         </div>
         <button class="modal-btn" @click="showTerms = false">关闭</button>
       </div>
     </div>
 
-    <!-- 联系我们弹窗 -->
+    <!-- 联系我们弹窗 (自适应高度 + weixin.png & dingtalk.png 展示) -->
     <div v-if="showContact" class="modal-overlay" @click.self="showContact = false">
-      <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-content contact-modal-content">
         <h3>Contact Us</h3>
-        <div class="modal-text-content">
-          <p>如果您在使用过程中遇到任何问题，或有合作意向，可以通过微信或钉钉联系我们：</p>
-          <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-            <div style="text-align: center;">
-              <img :src="weixinImg" alt="微信二维码" style="width: 130px; height: 130px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);" />
-              <div style="font-size: 0.75rem; margin-top: 0.25rem; color: var(--text-secondary);">微信</div>
+        <div class="modal-text-content contact-card-body">
+          <p>如果您在使用过程中遇到任何问题，或有合作意向，可以通过以下方式联系我们：</p>
+          <div class="contact-qr-container">
+            <div class="contact-qr-card">
+              <img :src="weixinImg" alt="微信联系" class="contact-qr-img" />
+              <span class="contact-qr-label">微信联系</span>
             </div>
-            <div style="text-align: center;">
-              <img :src="dingtalkImg" alt="钉钉二维码" style="width: 130px; height: 130px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);" />
-              <div style="font-size: 0.75rem; margin-top: 0.25rem; color: var(--text-secondary);">钉钉</div>
+            <div class="contact-qr-card">
+              <img :src="dingtalkImg" alt="钉钉交流" class="contact-qr-img" />
+              <span class="contact-qr-label">钉钉交流</span>
             </div>
           </div>
+          <p class="contact-email">反馈邮箱: <span style="color: var(--primary-color);">us@wuxian.xyz</span></p>
         </div>
         <button class="modal-btn" @click="showContact = false">关闭</button>
       </div>
     </div>
 
-    <!-- 裂变拦截弹窗 -->
+    <!-- 裂变拦截弹窗 (模块四：裂变机制) -->
     <FissionModal 
       :visible="showFission" 
       :wechat-id="wechatId"
       @unlocked="handleUnlocked"
     />
 
-    <!-- 分享引导浮层 -->
+    <!-- 分享卡片弹窗 (模块二扩展) -->
+    <ShareCardModal
+      :visible="showShareCard"
+      :content="displayResultText"
+      :wechat-id="wechatId"
+      @close="showShareCard = false"
+    />
+
+    <!-- 微信 H5 分享引导浮层 -->
     <div v-if="showShareGuide" class="share-guide-overlay" @click="handleShareClose">
       <div class="share-guide-arrow">↗</div>
       <div class="share-guide-content">
         <p>点击右上角菜单 <strong>•••</strong></p>
         <p>选择 <strong>「分享到朋友圈」</strong></p>
-        <p class="share-guide-sub">同登彼岸，与好友分享这段豁然开朗的机锋</p>
+        <p class="share-guide-sub">分享这款高效率的 AI 智能微应用</p>
       </div>
     </div>
   </div>
@@ -339,11 +308,12 @@
 import { ref, computed, onMounted } from 'vue';
 import UserTicker from './components/UserTicker.vue';
 import FissionModal from './components/FissionModal.vue';
+import DemoShowcase from './components/DemoShowcase.vue';
+import ShareCardModal from './components/ShareCardModal.vue';
 import appConfig from './config.json';
 import weixinImg from '../asset/weixin.png';
 import dingtalkImg from '../asset/dingtalk.png';
 
-// 读取动态配置
 const appTitle = ref(appConfig.title || '网腾无限AI 每日佛曰');
 const wechatId = ref(appConfig.wechatId || 'ai_wuxian_xyz');
 const promptTopic = ref(appConfig.promptTopic || '');
@@ -354,51 +324,39 @@ const loading = ref(false);
 const errorMsg = ref('');
 const result = ref('');
 const copied = ref(false);
+const showSuccessToast = ref(false);
 const showFission = ref(false);
 const showPrivacy = ref(false);
 const showTerms = ref(false);
 const showContact = ref(false);
 const showShareGuide = ref(false);
+const showShareCard = ref(false);
 
-const userScores = ref({
-  merit: 3,
-  mindfulness: 3,
-  attachment: 3,
-  karma: 3,
-  impatience: 3
-});
+const isKnocking = ref(false);
+const totalMerit = ref(parseInt(localStorage.getItem('muyu_total_merit') || '0', 10));
+const floatingItems = ref<{ id: number; text: string; x: number; y: number }[]>([]);
+let floatingId = 0;
+
+// 禅定指标字段
+const metricsList = [
+  { key: 'merit', label: '功德值 (Merit)' },
+  { key: 'mindfulness', label: '禅定度 (Mindfulness)' },
+  { key: 'attachment', label: '执念度 (Attachment)' },
+  { key: 'karma', label: '因果造化 (Karma)' },
+  { key: 'impatience', label: '浮躁系数 (Impatience)' }
+];
 
 const aiScores = ref<{ merit: number; mindfulness: number; attachment: number; karma: number; impatience: number; } | null>(null);
 
 const styleOptions = [
-  { label: '传统禅宗开示', value: '传统禅宗流派：佛曰切入，采用空灵古风的佛理隐喻与禅思故事化解红尘纷扰。' },
-  { label: '九巨擘禅意论', value: '九巨擘流派：模拟马斯克（热力学第二定律）、乔布斯（极简与直觉）、秦始皇（扫平妄念）等的科学与历史禅理激辩。' },
-  { label: '赛博木鱼解压', value: '赛博木鱼流派：用系统清理本地业力缓存、删除妄念进程、增加功德缓冲区等科幻机能解压。' },
-  { label: '当头棒喝警醒', value: '当头棒喝流派：极其辛辣警策，用毒舌调侃揭露执迷错觉，如同木鱼重锤让人瞬间警醒。' },
-  { label: '温情心灵抚慰', value: '温情抚慰流派：如暖阳抚慰心灵创伤，提供温柔包容的话语和切实的生活美学调适。' }
+  { label: '传统禅宗开示 (经典佛教公案指点迷局)', value: '传统禅宗开示' },
+  { label: '九巨擘禅意论 (马斯克/乔布斯等9大佬跨时空激辩)', value: '九巨擘禅意论' },
+  { label: '赛博木鱼解压 (系统级清理妄念与本地业力缓存)', value: '赛博木鱼解压' },
+  { label: '当头棒喝警醒 (极其毒舌辛辣拆穿自我感动)', value: '当头棒喝警醒' },
+  { label: '温情心灵抚慰 (细腻温暖的心理调试与生活美学)', value: '温情心灵抚慰' }
 ];
 
 const activeStyle = ref(styleOptions[0].value);
-
-const metricsList = [
-  { key: 'merit', label: '功德值 (Merit)', icon: '🕉️' },
-  { key: 'mindfulness', label: '禅定度 (Mindfulness)', icon: '🧘' },
-  { key: 'attachment', label: '执念度 (Attachment)', icon: '🍂' },
-  { key: 'karma', label: '因果造化 (Karma)', icon: '⚖️' },
-  { key: 'impatience', label: '浮躁系数 (Impatience)', icon: '🍵' }
-] as const;
-
-interface FloatingItem {
-  id: number;
-  x: number;
-  y: number;
-  text: string;
-}
-
-const floatingItems = ref<FloatingItem[]>([]);
-const isKnocking = ref(false);
-const totalMerit = ref(0);
-let floatId = 0;
 
 interface HistoryItem {
   id: string;
@@ -406,7 +364,6 @@ interface HistoryItem {
   category: string;
   input: string;
   styleLabel: string;
-  userScores: { merit: number; mindfulness: number; attachment: number; karma: number; impatience: number; };
   aiScores: { merit: number; mindfulness: number; attachment: number; karma: number; impatience: number; } | null;
   output: string;
 }
@@ -414,66 +371,10 @@ interface HistoryItem {
 const historyList = ref<HistoryItem[]>([]);
 const showHistory = ref(false);
 
-// 纯前端利用 Web Audio API 动态合成敲击木鱼的声音
-const playWoodenFishSound = () => {
-  try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    const now = ctx.currentTime;
-    osc.frequency.setValueAtTime(450, now);
-    osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
-    
-    gainNode.gain.setValueAtTime(0.6, now);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-    
-    osc.start(now);
-    osc.stop(now + 0.25);
-  } catch (e) {
-    console.error('AudioContext error:', e);
-  }
-};
-
-const knockWoodenFish = () => {
-  if (isKnocking.value) return;
-  isKnocking.value = true;
-  
-  // 触发振荡器发声
-  playWoodenFishSound();
-  
-  // 累加功德
-  totalMerit.value += 1;
-  localStorage.setItem('foyue_total_merit', totalMerit.value.toString());
-  
-  // 生成漂浮文字
-  const id = floatId++;
-  const x = Math.floor(Math.random() * 40) - 20;
-  const y = -45;
-  
-  floatingItems.value.push({ id, x, y, text: '功德 +1' });
-  
-  setTimeout(() => {
-    floatingItems.value = floatingItems.value.filter(item => item.id !== id);
-  }, 1000);
-
-  setTimeout(() => {
-    isKnocking.value = false;
-  }, 100);
-};
-
 const loadHistory = () => {
   try {
     const raw = localStorage.getItem('foyue_history_records');
     historyList.value = raw ? JSON.parse(raw) : [];
-    
-    const rawMerit = localStorage.getItem('foyue_total_merit');
-    totalMerit.value = rawMerit ? parseInt(rawMerit, 10) : 0;
   } catch (e) {
     historyList.value = [];
   }
@@ -493,7 +394,6 @@ const addHistoryRecord = () => {
     category: inquiryCategory.value,
     input: userInput.value,
     styleLabel,
-    userScores: { ...userScores.value },
     aiScores: aiScores.value ? { ...aiScores.value } : null,
     output: result.value
   };
@@ -507,7 +407,7 @@ const deleteHistoryRecord = (id: string) => {
 };
 
 const clearAllHistory = () => {
-  if (confirm('确认清空所有历史禅修解惑记录吗？此操作不可恢复。')) {
+  if (confirm('确认清空所有历史禅修谶语记录吗？此操作不可恢复。')) {
     historyList.value = [];
     saveHistory();
   }
@@ -516,21 +416,58 @@ const clearAllHistory = () => {
 const selectHistoryItem = (item: HistoryItem) => {
   inquiryCategory.value = item.category;
   userInput.value = item.input;
-  userScores.value = { ...item.userScores };
   aiScores.value = item.aiScores ? { ...item.aiScores } : null;
   result.value = item.output;
   showHistory.value = false;
 };
 
 const getAverageScore = (item: HistoryItem) => {
-  const s = item.aiScores || item.userScores;
+  if (!item.aiScores) return '4.0';
+  const s = item.aiScores;
   const avg = (s.merit + s.mindfulness + s.attachment + s.karma + s.impatience) / 5;
   return avg.toFixed(1);
 };
 
-const cleanExcerpt = (text: string) => {
-  const cleaned = cleanResponseText(text);
-  return cleaned.length > 80 ? cleaned.slice(0, 80) + '...' : cleaned;
+// 纯前端利用 Web Audio API 动态合成敲击木鱼的声音
+const knockWoodenFish = () => {
+  isKnocking.value = true;
+  setTimeout(() => {
+    isKnocking.value = false;
+  }, 100);
+
+  // 累加功德
+  totalMerit.value++;
+  localStorage.setItem('muyu_total_merit', totalMerit.value.toString());
+
+  // 新增漂浮提示 (严格无 Emoji)
+  const id = floatingId++;
+  const x = (Math.random() - 0.5) * 60;
+  const y = -40 - Math.random() * 20;
+  floatingItems.value.push({ id, text: '功德 +1', x, y });
+  setTimeout(() => {
+    floatingItems.value = floatingItems.value.filter(item => item.id !== id);
+  }, 800);
+
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.16);
+  } catch (err) {
+    // 捕获可能出现的音频上下文受限异常
+  }
 };
 
 const parseAIScores = (text: string) => {
@@ -556,7 +493,16 @@ const parseAIScores = (text: string) => {
 };
 
 const cleanResponseText = (text: string) => {
-  return text.replace(/\[ZEN_SCORES\].*?\[\/ZEN_SCORES\]/g, '').trim();
+  return text.replace(/\[ZEN_SCORES\][\s\S]*?\[\/ZEN_SCORES\]/gi, '').trim();
+};
+
+const displayResultText = computed(() => {
+  return cleanResponseText(result.value);
+});
+
+const cleanExcerpt = (text: string) => {
+  const cleaned = cleanResponseText(text);
+  return cleaned.length > 80 ? cleaned.slice(0, 80) + '...' : cleaned;
 };
 
 onMounted(() => {
@@ -578,6 +524,13 @@ const apiEndpoint = import.meta.env.DEV
   ? '/api/local/generate'
   : (import.meta.env.VITE_API_ENDPOINT || 'https://api.wuxian.xyz/api/v1/generate');
 
+const triggerSuccessToast = () => {
+  showSuccessToast.value = true;
+  setTimeout(() => {
+    showSuccessToast.value = false;
+  }, 3000);
+};
+
 const handleGenerate = async () => {
   if (isLimitReached.value) {
     showFission.value = true;
@@ -590,14 +543,17 @@ const handleGenerate = async () => {
   aiScores.value = null;
 
   try {
+    const fullPrompt = `【烦恼类型】：${inquiryCategory.value}。${userInput.value.trim() ? '烦恼困惑倾诉：' + userInput.value : ''}\n【选定流派】：${activeStyle.value}\n${promptTopic.value}`;
+
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         taskType: 'text',
-        prompt: `起卦主题：${promptTopic.value}。所遇烦恼类型：${inquiryCategory.value}。用户自我评分：功德值 ${userScores.value.merit}分，禅定度 ${userScores.value.mindfulness}分，执念值 ${userScores.value.attachment}分，因果造化 ${userScores.value.karma}分，浮躁系数 ${userScores.value.impatience}分。用户烦恼陈述：${userInput.value}。流派倾向：${activeStyle.value}`,
+        prompt: fullPrompt,
         style: activeStyle.value
       })
     });
@@ -607,18 +563,10 @@ const handleGenerate = async () => {
       errorMsg.value = data.error;
     } else {
       result.value = data.result;
-      
-      const parsed = parseAIScores(data.result);
-      if (parsed) {
-        aiScores.value = parsed;
-      } else {
-        aiScores.value = { ...userScores.value };
-      }
-
-      // 自动存储历史
+      aiScores.value = parseAIScores(data.result);
       addHistoryRecord();
+      triggerSuccessToast();
       
-      // 累加免费次数
       const currentUses = parseInt(localStorage.getItem('free_uses') || '0', 10);
       localStorage.setItem('free_uses', (currentUses + 1).toString());
     }
@@ -629,23 +577,25 @@ const handleGenerate = async () => {
   }
 };
 
+const resetReview = () => {
+  result.value = '';
+  aiScores.value = null;
+};
+
+const handleUseSample = (sampleTrouble: string) => {
+  userInput.value = sampleTrouble;
+  showHistory.value = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 const handleUnlocked = () => {
   showFission.value = false;
   handleGenerate();
 };
 
-const resetReview = () => {
-  userInput.value = '';
-  result.value = '';
-  aiScores.value = null;
-  errorMsg.value = '';
-  userScores.value = { merit: 3, mindfulness: 3, attachment: 3, karma: 3, impatience: 3 };
-};
-
 const copyText = async () => {
   try {
-    const cleanedText = cleanResponseText(result.value);
-    await navigator.clipboard.writeText(cleanedText);
+    await navigator.clipboard.writeText(displayResultText.value);
     copied.value = true;
     setTimeout(() => {
       copied.value = false;
@@ -655,515 +605,3 @@ const copyText = async () => {
   }
 };
 </script>
-
-<style scoped>
-/* 评分滑块 */
-.score-sliders {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 0.5rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  padding: 1.25rem;
-  border-radius: 12px;
-}
-
-.slider-group-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  text-align: left;
-}
-
-.slider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.slider-title {
-  font-weight: 500;
-}
-
-.slider-value {
-  color: var(--primary-color);
-  font-weight: bold;
-}
-
-.range-slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  outline: none;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--primary-color);
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-  transition: transform 0.1s ease;
-}
-
-.range-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-/* 木鱼解压区域 */
-.wooden-fish-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  margin-bottom: 1.5rem;
-}
-
-.fish-canvas {
-  position: relative;
-  width: 150px;
-  height: 120px;
-}
-
-.wooden-fish-svg {
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  transition: transform 0.08s ease-in-out;
-}
-
-.wooden-fish-svg:hover {
-  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3));
-}
-
-.wooden-fish-svg.knocking {
-  transform: scale(0.92);
-}
-
-.floating-merit {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  font-size: 0.95rem;
-  font-weight: bold;
-  color: var(--primary-color);
-  text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-/* 浮空渐隐动画 */
-.float-up-enter-active {
-  animation: floatUpAnim 1s ease-out forwards;
-}
-
-@keyframes floatUpAnim {
-  0% {
-    transform: translate(-50%, -40px);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -100px);
-    opacity: 0;
-  }
-}
-
-.merit-counter-display {
-  font-size: 0.95rem;
-  color: var(--text-primary);
-  text-align: center;
-}
-
-.merit-counter-display strong {
-  font-size: 1.3rem;
-  text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-}
-
-.wood-fish-tip {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin: 0.25rem 0 0 0;
-}
-
-/* 对比看板 */
-.comparison-dashboard {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-  text-align: left;
-}
-
-.dashboard-title {
-  font-size: 0.95rem;
-  margin-top: 0;
-  margin-bottom: 1.25rem;
-  color: var(--text-primary);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding-bottom: 0.5rem;
-}
-
-.comparison-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.comparison-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.metric-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.metric-label {
-  color: var(--text-primary);
-}
-
-.metric-scores-text {
-  color: var(--text-secondary);
-}
-
-.comparison-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.bar-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.bar-label {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  width: 25px;
-}
-
-.bar-bg {
-  flex: 1;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.user-fill {
-  background: linear-gradient(90deg, #a855f7 0%, #d946ef 100%);
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
-}
-
-.ai-fill {
-  background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%);
-  box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
-}
-
-/* 历史卡片定制：Nomad Style */
-.h-card-nomad-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.h-city-tag {
-  font-size: 1.05rem;
-  font-weight: bold;
-  color: var(--text-primary);
-}
-
-.h-score-badge {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  padding: 0.2rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: bold;
-}
-
-.h-mini-metrics {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.h-mini-item {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-/* 分享样式与浮层 */
-.share-guide-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(17, 14, 36, 0.9);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  padding: 2rem;
-  box-sizing: border-box;
-  color: #fff;
-  cursor: pointer;
-}
-
-.share-guide-arrow {
-  font-size: 3rem;
-  color: var(--primary-color);
-  animation: bounce 1s infinite alternate;
-  margin-right: 1.5rem;
-}
-
-.share-guide-content {
-  text-align: center;
-  width: 100%;
-  margin-top: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.share-guide-content p {
-  font-size: 1.2rem;
-  margin: 0;
-}
-
-.share-guide-sub {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-top: 1rem !important;
-}
-
-/* 右上角常驻分享按钮 */
-.floating-share-btn {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 99;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 0.8rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.floating-share-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.2);
-}
-
-.share-icon {
-  width: 14px;
-  height: 14px;
-}
-
-/* 历史记录选项卡 */
-.card-tabs {
-  display: flex;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 1.25rem;
-  gap: 0.5rem;
-}
-
-.tab-btn {
-  background: none;
-  border: none;
-  padding: 0.5rem 1rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: bold;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.tab-btn:hover {
-  color: var(--text-primary);
-}
-
-.tab-btn.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-
-/* 历史卡片网格 */
-.history-view {
-  text-align: left;
-}
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.clear-all-btn {
-  background: none;
-  border: none;
-  color: var(--accent-color);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.clear-all-btn:hover {
-  opacity: 0.8;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.history-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
-}
-
-.history-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  transition: all 0.3s ease;
-}
-
-.history-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(168, 85, 247, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.h-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-}
-
-.h-card-style {
-  background: rgba(168, 85, 247, 0.15);
-  color: var(--primary-color);
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-.h-card-time {
-  color: var(--text-secondary);
-}
-
-.h-card-body {
-  flex: 1;
-  font-size: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.h-card-excerpt {
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-.h-card-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 0.75rem;
-}
-
-.h-action-btn {
-  background: none;
-  border: none;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.load-btn {
-  color: var(--primary-color);
-}
-
-.load-btn:hover {
-  color: var(--primary-hover);
-}
-
-.delete-btn {
-  color: var(--accent-color);
-}
-
-.delete-btn:hover {
-  color: #ef4444;
-}
-
-.scroll-box {
-  max-height: 320px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-</style>
