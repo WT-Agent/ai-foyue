@@ -2,23 +2,23 @@
   <div v-if="visible" class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content share-modal-content">
       <div class="modal-header">
-        <h3>佛曰解惑谶语卡片</h3>
+        <h3>分享卡片生成</h3>
         <button class="close-icon-btn" @click="$emit('close')">×</button>
       </div>
 
-      <!-- 玻璃拟态分享卡片区域 (可截图保存) -->
+      <!-- 玻璃拟态分享卡片实体区域 (可通过 H5 长按或截图保存) -->
       <div id="share-card-node" class="share-card-wrapper">
         <div class="share-card-header">
           <div class="share-brand">
             <span class="brand-logo-dot"></span>
             <span class="brand-title">网腾无限AI</span>
           </div>
-          <span class="share-tag">每日佛曰解压</span>
+          <span class="share-tag">爆款文案二创</span>
         </div>
 
         <div class="share-card-body">
           <div class="share-quote-symbol">“</div>
-          <div class="share-result-text">{{ cleanContent }}</div>
+          <div class="share-result-text">{{ content }}</div>
           <div class="share-quote-symbol end">”</div>
         </div>
 
@@ -34,20 +34,20 @@
               </svg>
             </div>
             <div class="share-tip-text">
-              <span class="primary">扫码体验 AI 每日佛曰与功德木鱼</span>
+              <span class="primary">扫码解锁无限创作灵感</span>
               <span class="sub">ai.wuxian.xyz · 微信公众号：{{ wechatId }}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 操作按钮 -->
+      <!-- 操作与提示 -->
       <div class="share-actions">
-        <p class="share-guide-tip">微信 H5 环境下可点击下方按钮复制，或直接截图保存此卡片到相册</p>
+        <p class="share-guide-tip">微信 H5 环境下可点击下方按钮复制，或直接截图保存此精美卡片到相册</p>
         <div class="share-btn-group">
           <button class="modal-btn secondary" @click="$emit('close')">关闭</button>
           <button class="modal-btn primary" @click="handleCopy">
-            {{ copied ? '解惑卡片已复制' : '复制谶语卡片全文本' }}
+            {{ copied ? '卡片文案已复制' : '复制卡片全文本' }}
           </button>
         </div>
       </div>
@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps<{
   visible: boolean;
@@ -70,15 +70,9 @@ defineEmits<{
 
 const copied = ref(false);
 
-// 清理回复末尾的特殊标记 [ZEN_SCORES]...[/ZEN_SCORES]
-const cleanContent = computed(() => {
-  if (!props.content) return '';
-  return props.content.replace(/\[ZEN_SCORES\][\s\S]*?\[\/ZEN_SCORES\]/gi, '').trim();
-});
-
 const handleCopy = async () => {
   try {
-    const textToCopy = `【网腾无限AI - 每日佛曰解惑】\n\n${cleanContent.value}\n\n体验每日木鱼与数字解压：https://ai.wuxian.xyz`;
+    const textToCopy = `【网腾无限AI - 爆款文案二创】\n\n${props.content}\n\n体验更多 AI 灵感微应用：https://ai.wuxian.xyz`;
     await navigator.clipboard.writeText(textToCopy);
     copied.value = true;
     setTimeout(() => {
